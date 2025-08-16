@@ -1,0 +1,104 @@
+\documentclass[hidelinks]{article}
+\usepackage[a4paper, total={7in, 10in}]{geometry}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{amsmath}
+\usepackage{tikz}
+\usepackage{tkz-euclide}
+\usepackage[unicode]{hyperref}
+\usepackage[all]{hypcap}
+\usepackage{fancyhdr}
+
+\usetikzlibrary{angles,calc, decorations.pathreplacing}
+
+\definecolor{carminered}{rgb}{1.0, 0.0, 0.22}
+\definecolor{capri}{rgb}{0.0, 0.75, 1.0}
+\definecolor{brightlavender}{rgb}{0.75, 0.58, 0.89}
+
+\title{\textbf{Lexical Analysis}}
+\author{Sahil Muhammed}
+\date{August 10th, 2025}
+\begin{document}
+\hypersetup{bookmarksnumbered=true,}
+% \pagecolor{black}
+% \color{white}
+\maketitle
+
+\begin{Large}
+\tableofcontents
+\end{Large}%
+\pagebreak
+
+\section{Compiler and Interpreter}
+
+\begin{itemize}
+    \item A compiler is a software or program that translates programs from a source language to a target language so that both programs are equivalent during run-time.
+    \item An interpreter is a language processor that directly executes the instructions from the source language and gives the output directly, skipping the translation process in comparison to a compiler.
+
+    \subsection{Analogy — Language translation}
+
+    \begin{itemize}
+        \item Imagine you write a book in French and your audience speaks English.
+
+        \item \textbf{Compiler approach:}
+
+        You hire a translator who translates the entire book into English, prints it, and hands it to your audience. \\ 
+
+        Once done, the audience can read it anytime without the translator. \\
+
+        \textbf{Drawback}: takes time before anyone can start reading.
+
+        \item \textbf{Interpreter approach:}
+
+        You hire a translator to stand next to the audience and read your French book aloud, translating sentence-by-sentence in real time. \\
+
+        People can start hearing the story right away. \\
+
+        \textbf{Drawback}: the translator must be there every time, and real-time translation is often slower.
+    \end{itemize}
+
+    \item There are hybrid use-cases of both compilers and interpreters. For example, Java compiles the program into bytecode and then the intermediate program is then interpreted (line-by-line by execution). These bytecodes are interpreted by a virtual machine. Its application being that it can be compiled in one computer and can then be interpreted across a network.
+
+    \item There are some Java compilers called "Just-In-Time" (JIT) compilers which try to improve the interpretation of bytecodes by directly translating portions of a program which occur more frequently than other parts (also called \textit{hotspots}) into native machine code to save time when its run the next time.
+
+    \item The name comes from considering the phase at which it compiles the program. A compiler compiles the entire program into assembly (or some low-level language) before being executed. In this case, the compilation takes place during the interpretation, and it is only done for chunks which are repetitive.
+\end{itemize}
+
+\section{Stages Until Executable}
+
+    \begin{itemize}
+        
+    \item The source program may be divided into different modules. It is the job of the preprocessor to collect these different modules and also expand the macro definitions. The modified source program is then sent to the compiler which returns an assembly program.
+
+    \item The assembly program is then processed by \textit{assembler} to return a relocatable machine code. Since the relocatable machine code can be very huge in size, they are compiled/processed in chunks. So, each chunk may refer to some other chunk and hence they may need to be linked to one another. The \textit{linker} links these and the \textit{loader} puts them into the memory.
+    \end{itemize}
+
+\section{Analysis and Synthesis}
+    \begin{itemize}
+        \item There are two main processes for a compiler; analysis and synthesis. 
+        \item The analysis phase takes the input character stream and converts it into tokens, and then assigns a grammatical structure on them (lexemes). Eventually, these are then converted to an intermediate form of representation.
+        \item The compiler can detect errors in this phase as well (syntactical or semantical). Moreover, a table called \textit{symbol table} is used to store some important information regarding the source program. This table along with the intermediate form is sent to the synthesis part.
+    \end{itemize}
+
+\section{Lexical Analysis}
+    \begin{itemize}
+        \item This phase of a compiler reads the input stream of characters and then groups them into tokens. Before that, it turns these characters into groups called \textit{lexemes}.
+        \item A token is a 2-tuple that stores the name of the token and its corresponding \textbf{attribute value}.
+        $$<\text{token-name}, \text{attribute-value}>$$
+        \item The \textit{attribute-value} points to an entry in the symbol table.
+    \end{itemize}
+
+\section{Syntax Analysis}
+    \begin{itemize}
+        \item This phase takes in the tokens and then converts them into a tree-like representation called a \textit{syntax trees}. In it, the internal nodes represent operators and the leaf nodes represent the operands.
+    \end{itemize}
+
+\section{Semantic Analysis}
+    \begin{itemize}
+        \item The semantic analyzer checks whether the syntax tree forms a semantically correct structure. 
+        \item It also performs \textit{type checking}, which is to see whether the operands are of the same data type.
+        \item It stores the type information in either the symbol table or the syntax tree.
+        \item Sometimes, an operand can be converted to another type. This is called \textit{coercion}. For example, an integer can be converted to a floating point value by either type-casting it or by implicit conversion.
+    \end{itemize}
+
+\end{document}
+
