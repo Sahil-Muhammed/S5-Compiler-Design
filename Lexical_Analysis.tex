@@ -90,15 +90,49 @@
 \section{Syntax Analysis}
     \begin{itemize}
         \item This phase takes in the tokens and then converts them into a tree-like representation called a \textit{syntax trees}. In it, the internal nodes represent operators and the leaf nodes represent the operands.
+        \item The input will be the stream of tokens and the grammar rules. The output will be a parse tree if the given stream of tokens are syntactically valid. Otherwise, it will produce an error.
+        \item Essentially, the parser checks for membership of the given stream of tokens in the language of grammar rules.
     \end{itemize}
 
 \section{Semantic Analysis}
     \begin{itemize}
         \item The semantic analyzer checks whether the syntax tree forms a semantically correct structure. 
-        \item It also performs \textit{type checking}, which is to see whether the operands are of the same data type.
+        \item It also performs \textit{type checking}, which is to see whether the operands are of the same data type or at least compatible with each other.
         \item It stores the type information in either the symbol table or the syntax tree.
         \item Sometimes, an operand can be converted to another type. This is called \textit{coercion}. For example, an integer can be converted to a floating point value by either type-casting it or by implicit conversion.
+        \item This phase also checks whether each identifier is declared before using it.
     \end{itemize}
 
-\end{document}
+\section{Example}
+    \begin{itemize}
+        \item Let's see what the lexical analyzer does using an example.
+        \item Input: $\texttt{sum = right + left - 1;}$
+        \item The lexemes created will be: \{\texttt{sum, =, right, +, left, -, 1, ;}\}
+        \item The output of the lexical analyzer will be the following tokens: 
+        $$\texttt{<id, sum>, <assign>, <id, right>, <op, +>, <id, left>, <op, ->, <num, 1>, <punct, ;>}$$
+    \end{itemize}
 
+\section{Parse Table}
+    \begin{itemize}
+        \item Its a table that stores information regarding identifiers.
+        \item It is created and updated during the lexical and syntax analysis phases.
+    \end{itemize}
+
+\section{Synthesis}
+    \begin{itemize}
+        \item After the analysis phase, the synthesis phase ensures that the code is generated in the target language.
+        \item In this phase, the intermediate representation (IR) such as the syntax/parse tree from the previous phases is used to create the machine-level code.
+        \item In between, it may convert the existing IR (high-level) to an IR of a lower level.
+    \end{itemize}
+\section{3-Address Code}
+    \begin{itemize}
+        \item \texttt{sum = right - left + 1;}
+        \item The 3-address code for the assignment statement above would be as follows: \\
+        $\texttt{t1 = left + 1;}$ \\
+        $\texttt{t2 = right - t1;}$ \\
+        $\texttt{sum = t2;}$ \\
+
+        \item A maximum of one variable/operand on the left hand side.
+        \item A maximum of 3 operands per instruction, hence the name.
+    \end{itemize}
+\end{document}
