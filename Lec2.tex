@@ -1,0 +1,143 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage{amsmath, amssymb}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\setlist{nosep}
+
+\title{\textbf{Lecture 2 Notes: Compiler Design}}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{small}
+\tableofcontents
+\end{small}%
+\pagebreak
+
+\section{What is Lexical Analysis?}
+\begin{itemize}
+    \item The input is a high level language program, such as a `C` program in the form of a sequence of characters.
+    \item The output is a sequence of tokens that is sent to the parser for syntax analysis.
+    \item Strips off blanks, tabs, newlines, and comments from the source program.
+    \item Keeps track of line numbers and associates error messages from various parts of a compiler with line numbers.
+    \item Performs some preprocessor functions such as \#define and \#include in `C`.
+\end{itemize}
+
+\section{Separation of Lexical Analysis from Syntax Analysis}
+\begin{itemize}
+    \item Simplification of design -- software engineering reason.
+    \item I/O issues are limited to LA alone.
+    \item More compact and faster parser.
+    \item LA based on finite automata are more efficient to implement than pushdown automata used for parsing (due to stack).
+\end{itemize}
+
+\section{Tokens, Patterns, and Lexemes}
+Running example: \texttt{float abs\_zero\_Kelvin = -273;}
+\begin{description}
+    \item[Token (also called word):] A string of characters which logically belong together. Examples: \texttt{float}, identifier, equal, minus, intnum, semicolon. Tokens are treated as terminal symbols of the grammar specifying the source language.
+    \item[Pattern:] The set of strings for which the same token is produced. The pattern is said to match each string in the set. Examples: \texttt{float}, $l(l+d+_)^*$, $=$, $-$, $d+$, \texttt{;}.
+    \item[Lexeme:] The sequence of characters matched by a pattern to form the corresponding token. Examples: \texttt{"float"}, \texttt{"abs\_zero\_Kelvin"}, \texttt{"="}, \texttt{"-"}, \texttt{"273"}, \texttt{";"}.
+\end{description}
+
+\section{Tokens in Programming Languages}
+\begin{itemize}
+    \item Keywords, operators, identifiers (names), constants, literal strings, punctuation symbols such as parentheses, brackets, commas, semicolons, and colons, etc.
+    \item A unique integer representing the token is passed by LA to the parser.
+    \item Attributes for tokens (apart from the integer representing the token):
+    \begin{itemize}
+        \item identifier: the lexeme of the token, or a pointer into the symbol table where the lexeme is stored by the LA.
+        \item intnum: the value of the integer (similarly for floatnum, etc.).
+        \item string: the string itself.
+        \item The exact set of attributes are dependent on the compiler designer.
+    \end{itemize}
+\end{itemize}
+
+\section{Difficulties in Lexical Analysis}
+\begin{itemize}
+    \item Certain languages do not have any reserved words (e.g., \texttt{while}, \texttt{do}, \texttt{if}, \texttt{else}, etc. are reserved in C, but not in PL/1).
+    \item In FORTRAN, some keywords are context-dependent:
+    \begin{itemize}
+        \item In the statement, \texttt{DO 10 I = 10.86}, \texttt{DO10I} is an identifier, and DO is not a keyword.
+        \item But in the statement, \texttt{DO 10 I = 10, 86}, DO is a keyword (because of the comma after 10).
+    \end{itemize}
+    \item Such features require substantial lookahead for resolution.
+    \item Blanks are not significant in FORTRAN and can appear in the midst of identifiers, but not so in C.
+    \item LA cannot catch significant errors except for simple ones such as illegal symbols.
+    \item In such cases, LA skips characters in the input until a well-formed token is found.
+\end{itemize}
+
+\section{Specification and Recognition of Tokens}
+\begin{itemize}
+    \item Regular definitions, a mechanism based on regular expressions, are very popular for specification of tokens.
+    \item Implemented in the lexical analyzer generator tool LEX.
+    \item Transition diagrams, a variant of finite state automata, are used to implement regular definitions and recognize tokens.
+    \item LEX automatically generates optimized FSAs from regular definitions.
+\end{itemize}
+
+\section{Languages}
+\begin{itemize}
+    \item \textbf{Symbol:} An abstract entity, not defined (e.g., letters, digits).
+    \item \textbf{String:} A finite sequence of juxtaposed symbols. Examples: ``abcd'', ``caba''. Length: $|w|$ is number of symbols in string $w$.
+    \item \textbf{Alphabet:} A finite set of symbols.
+    \item \textbf{Language:} A set of strings of symbols from some alphabet.
+\end{itemize}
+
+\section{Language Representations}
+\begin{itemize}
+    \item Each subset of $\Sigma^*$ is a language.
+    \item The set of languages over $\Sigma^*$ is uncountably infinite.
+    \item Each language must have a finite representation.
+    \item Regular expressions (type-3), context-free grammars (type-2), context-sensitive grammars (type-1), and type-0 grammars are finite representations of respective languages.
+\end{itemize}
+
+\section{Examples of Languages}
+\begin{itemize}
+    \item $\Sigma = \{a, b, c\}$
+    \item $L_1 = \{a^m b^n \mid m, n \geq 0\}$ is regular.
+    \item $L_2 = \{a^n b^n \mid n \geq 0\}$ is context-free but not regular.
+    \item $L_3 = \{a^n b^n c^n \mid n \geq 0\}$ is context-sensitive but neither regular nor context-free.
+\end{itemize}
+
+\section{Automata}
+\begin{itemize}
+    \item Automata are machines that accept languages:
+    \begin{itemize}
+        \item Finite State Automata accept Regular Languages.
+        \item Pushdown Automata accept CFLs.
+        \item Linear Bounded Automata accept CSLs.
+        \item Turing Machines accept type-0 languages.
+    \end{itemize}
+    \item Applications: compiler design, string processing, control systems, parsers, etc.
+\end{itemize}
+
+\section{Finite State Automaton (FSA)}
+\begin{itemize}
+    \item An FSA is an acceptor or recognizer of regular languages.
+    \item An FSA is a 5-tuple $(Q, \Sigma, \delta, q_0, F)$ where:
+    \begin{itemize}
+        \item $Q$ is a finite set of states,
+        \item $\Sigma$ is the input alphabet,
+        \item $\delta$ is the transition function $\delta : Q \times \Sigma \to Q$,
+        \item $q_0$ is the start state,
+        \item $F$ is the set of final states.
+    \end{itemize}
+\end{itemize}
+
+\section{Regular Languages}
+\begin{itemize}
+    \item The language accepted by an FSA is the set of all strings accepted by it.
+    \item This is a regular language (or regular set).
+    \item For every regular expression, an FSA can be constructed and vice versa.
+\end{itemize}
+
+\section{Nondeterministic FSA (NFA)}
+\begin{itemize}
+    \item NFAs are FSAs which allow 0, 1, or more transitions from a state on a given input symbol.
+    \item Transition function: $\delta : Q \times \Sigma \to 2^Q$.
+    \item Every NFA can be converted to an equivalent DFA.
+\end{itemize}
+
+\end{document}
+
