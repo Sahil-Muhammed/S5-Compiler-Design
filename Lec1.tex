@@ -1,0 +1,169 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{enumitem}
+\usepackage{hyperref}
+
+\title{\textbf{Lecture 1 Notes: Compiler Design}}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\begin{small}
+\tableofcontents
+\end{small}%
+\pagebreak
+
+\section{Why study compiler design?}
+\begin{itemize}[leftmargin=1.5em]
+    \item It's everywhere
+    \item Applications are numerous:
+    \begin{itemize}
+        \item Parser for HTML in web browser
+        \item Interpreters for JS/Flash
+        \item Machine code generation for high level languages
+        \item Software testing
+        \item Program optimization
+        \item Malicious code detection
+        \item Design of new computer architectures (compiler-in-the-loop hardware development)
+        \item Hardware synthesis: VHDL to RTL translation
+        \item Compiler simulation
+    \end{itemize}
+\end{itemize}
+
+\section{Complexity of Compiler Tech}
+\begin{itemize}[leftmargin=1.5em]
+    \item Possibly most complex system software
+    \item Writing it is a substantial exercise in software engineering
+    \item Complexity arises from the fact that it is required to map a programmer's requirements (in a HLL program) to architectural details
+    \item Uses algorithms and techniques from a very large number of areas in CS
+\end{itemize}
+
+\section{Nature of Compiler Algorithms}
+\begin{itemize}[leftmargin=1.5em]
+    \item Draws results from mathematical logic, lattice theory, linear algebra, probability, etc:
+    \begin{itemize}
+        \item Type checking, static analysis, dependence analysis, loop parallelization, cache analysis, etc.
+    \end{itemize}
+    \item Practical applications:
+    \begin{itemize}
+        \item Greedy algorithms – register allocation
+        \item Heuristic search – list scheduling
+        \item Graph algorithms – dead code elimination, register allocation
+        \item Dynamic programming – instruction selection
+        \item Optimization techniques – instruction scheduling
+        \item Finite automata – lexical analysis
+        \item Pushdown automata – parsing
+        \item Fixed point algorithms – data-flow analysis
+    \end{itemize}
+\end{itemize}
+
+\section{Other Uses of Scanning and Parsing Techniques}
+\begin{itemize}[leftmargin=1.5em]
+    \item Assembler implementation
+    \item Online text searching (GREP, AWK) and word processing
+    \item Website filtering
+    \item Command language interpreters
+    \item Scripting language interpretation (Unix shell, Perl, Python)
+\end{itemize}
+
+\section{Other Uses of Program Analysis Techniques}
+\begin{itemize}[leftmargin=1.5em]
+    \item Converting a sequential loop to a parallel loop
+    \item Program analysis to determine if programs are data-race free
+    \item Profiling programs to determine busy regions
+    \item Program slicing
+    \item Data-flow analysis for software testing: uncovering errors along all paths, dereferencing null pointers, buffer overflows and memory leaks
+    \item Worst Case Execution Time (WCET) estimation and energy analysis
+\end{itemize}
+
+\section{Language Processing System}
+\begin{itemize}[leftmargin=1.5em]
+    \item source program $\rightarrow$ Preprocessor (expands macros) $\rightarrow$ modified source program $\rightarrow$ Compiler $\rightarrow$ Target Assembly program $\rightarrow$ Assembler $\rightarrow$ Relocatable Machine Code $\rightarrow$ Linker/Loader $\rightarrow$ Target Machine Code
+\end{itemize}
+
+\section{Compiler Overview}
+\begin{itemize}[leftmargin=1.5em]
+    \item char stream $\rightarrow$ Lexical Analysis $\rightarrow$ Token stream $\rightarrow$ Syntax Analyzer $\rightarrow$ Semantic Analyzer $\rightarrow$ Annotated Syntax Tree $\rightarrow$ Intermediate Code Generator $\rightarrow$ Intermediate Representation ...
+\end{itemize}
+
+\section{Compilers and Interpreters}
+\begin{itemize}[leftmargin=1.5em]
+    \item 7 blocks along with symbol table
+    \item Interpreter stops after intermediate code generator
+    \item Compiler generates machine code, interpreters interpret intermediate code
+    \item Interpreters are easier to write and can provide better error messages
+    \item Interpreters are at least 5 times slower than machine code
+    \item Interpreters require more memory than compiled code
+    \item Examples: Perl, Python, Unix Shell, Java, BASIC, LISP
+\end{itemize}
+
+\section{Translation Overview – Lexical Analysis}
+\begin{itemize}[leftmargin=1.5em]
+    \item \texttt{fahrenheit = centigrade * 1.8 + 32} $\rightarrow$ Lexical Analysis $\rightarrow$ \{ \texttt{<id,1> <assign> <id,2> <multop> <fconst,1.8> <addop> <iconst,32>} \} $\rightarrow$ Syntax Analyzer
+\end{itemize}
+
+\section{Lexical Analysis}
+\begin{itemize}[leftmargin=1.5em]
+    \item LA can be generated automatically from regular expression specifications
+    \begin{itemize}
+        \item LEX and Flex are two such tools
+    \end{itemize}
+    \item LA is a deterministic finite state automaton
+    \item Why is LA separate from parsing?
+    \begin{itemize}
+        \item Simplification of design
+        \item I/O issues isolated to LA
+        \item LA based on finite automata are more efficient than pushdown automata used for parsing
+    \end{itemize}
+\end{itemize}
+
+\section{Translation Overview – Syntax Analysis}
+\begin{itemize}[leftmargin=1.5em]
+    \item $\{ <id,1> <assign> <id,2> <multop> <fconst,1.8> <addop> <iconst,32> \}$$\rightarrow$ Syntax Analyzer $\rightarrow$ (Abstract) Syntax Tree $\rightarrow$ Semantic Analyzer
+\end{itemize}
+
+\section{Parsing or Syntax Analysis}
+\begin{itemize}[leftmargin=1.5em]
+    \item Parsers can be generated from context-free grammars:
+    \begin{itemize}
+        \item LL(1), LALR(1) are most popular
+        \item Tools: ANTLR, YACC, Bison
+    \end{itemize}
+    \item Parsers are deterministic push-down automata
+    \item Limitations: cannot handle context-sensitive features
+    \begin{itemize}
+        \item e.g., Variables declared before use, type matching in assignments, parameter checks
+    \end{itemize}
+\end{itemize}
+
+\section{Semantic Analysis}
+\begin{itemize}[leftmargin=1.5em]
+    \item Ensures semantic consistency
+    \item Type checking is a key task
+    \item Stores type information in symbol table or syntax tree
+    \item Supports semantic validation and later compilation phases
+    \item Static semantics can be specified using attribute grammars
+\end{itemize}
+
+\section{Translation Overview – Intermediate Code Generation}
+\begin{itemize}[leftmargin=1.5em]
+    \item Annotated syntax tree $\rightarrow$ Intermediate Code Generator $\rightarrow$ Basic target language instructions $\rightarrow$ Code optimizer
+\end{itemize}
+
+\section{Intermediate Code Generation}
+\begin{itemize}[leftmargin=1.5em]
+    \item Direct machine code generation has two problems:
+    \begin{itemize}
+        \item With $m$ languages and $n$ target machines, need $m \times n$ compilers
+        \item Code optimizer cannot be reused
+    \end{itemize}
+    \item Intermediate code allows machine-independent optimizations
+    \item Must be easy to produce and translate
+    \item Should not contain machine-specific parameters
+\end{itemize}
+
+\end{document}
+
