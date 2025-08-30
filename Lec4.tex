@@ -1,0 +1,253 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage{amsmath, amssymb}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{listings}
+\setlist{nosep}
+
+\title{Lecture 4 Notes}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{Combining Transition Diagrams to form Lexical Analyzers}
+\begin{itemize}
+    \item Different transition diagrams (TDs) must be combined to yield a lexical analyzer.
+    \item Combining TDs is not trivial.
+    \item One approach: try TDs one after another (e.g., reserved words, constants, identifiers, operators).
+    \item But this fails for ``longest match'' characteristic (e.g., input \texttt{thenext} should be \texttt{then} + \texttt{ext}, not \texttt{thenext} as identifier).
+    \item To find the longest match, all TDs must be tried and the longest must be chosen.
+    \item Using LEX automates this process for compiler writers.
+\end{itemize}
+
+\section*{LEX - A Lexical Analyzer Generator}
+\begin{itemize}
+    \item LEX has a language for describing regular expressions.
+    \item It generates a pattern matcher for regex specifications.
+    \item General structure of a LEX program:
+\begin{verbatim}
+{definitions}   /* optional */
+%%
+{rules}         /* essential */
+%%
+{user subroutines} /* essential */
+\end{verbatim}
+    \item Commands to create a lexical analyzer:
+\begin{verbatim}
+lex ex.l         /* creates lex.yy.c */
+gcc -o ex.o lex.yy.c
+./ex.o           /* runs lexical analyzer */
+\end{verbatim}
+\end{itemize}
+
+\subsection*{Example LEX Program}
+\begin{lstlisting}[language=C]
+/* LEX specification */
+%%
+[A-Z]+    {ECHO; printf("\n");}
+.|\n      ;
+%%
+yywrap(){}
+main() { yylex(); }
+
+/* Input */
+wewevWEUFWIGhHkkH
+sdcwehSDWEhTkFLKsewT
+
+/* Output */
+WEUFWIG
+H
+H
+SDWE
+T
+FL
+T
+\end{lstlisting}
+
+\section*{Definitions Section}
+\begin{itemize}
+    \item Contains macros and included code.
+    \item Example definitions:
+\begin{verbatim}
+digit   [0-9]
+number  {digit}{digit}*
+\end{verbatim}
+    \item Included code is placed between \texttt{\%\{ ... \%\}}:
+\begin{verbatim}
+%{
+float number; int count = 0;
+%}
+\end{verbatim}
+\end{itemize}
+
+\section*{Rules Section}
+\begin{itemize}
+    \item Contains patterns and C-code actions.
+    \item Pattern format:
+\begin{verbatim}
+{pattern}   { action (C-code) }
+\end{verbatim}
+    \item Patterns are converted into NFAs $\to$ DFAs $\to$ optimized tables.
+    \item DFA executes actions when reaching final states.
+\end{itemize}
+
+\section*{Strings and Operators}
+\begin{itemize}
+    \item Examples of strings: \texttt{integer}, \texttt{a57d}, \texttt{hello}.
+    \item Operators: \texttt{" \ \[\] \^ - ? . * + | () \$ \{\} \% <>}
+    \item Escape: \texttt{\textbackslash} (same as in C).
+    \item Character classes: inside \texttt{[ ]}.
+\end{itemize}
+
+Examples:
+\begin{verbatim}
+[-+][0-9]+         ---> (-|+) (0|1|...|9)+
+[a-d][0-4][A-C]    ---> a|b|c|d|0|...|4|A|B|C
+[^abc]             ---> all chars except a,b,c
+[+\-][0-5]+        ---> (+|-) (0|...|5)+
+[^a-zA-Z]          ---> all non-letter characters
+\end{verbatim}
+
+\section*{Operators - Details}
+\begin{itemize}
+    \item \texttt{.} matches any character except newline.
+    \item \texttt{?} stands for optional (\texttt{ab?c} = \texttt{a(b|\(\epsilon\))c}).
+    \item Grouping/repetition: \texttt{(ab|cd+)?(ef)*}.
+    \item Context-sensitive: \texttt{\^}, \texttt{\$}, \texttt{/}.
+\end{itemize}
+
+Examples:
+\begin{verbatim}
+^ab    ---> line beginning with ab
+ab$    ---> line ending with ab
+DO/({letter}|{digit})* ---> matches DO followed by letters/digits
+\end{verbatim}
+
+\section*{LEX Actions}
+\begin{itemize}
+    \item Default: unmatched chars are copied to output.
+    \item Special variables:
+    \begin{itemize}
+        \item \texttt{yytext} - matched text.
+        \item \texttt{yyleng} - number of matched characters.
+    \end{itemize}
+    \item Longest match and rule order are used.
+\end{itemize}
+
+Example:
+\begin{verbatim}
+integer   action1;
+[a-z]+    action2;
+\end{verbatim}
+Input \texttt{integers} matches the second pattern.
+
+\section*{LEX Example 2: EX-2.lex}
+\begin{lstlisting}[language=C]
+%%
+^[ ]*\n
+\n    {ECHO; yylineno++;}
+.*    {printf("%d\t%s", yylineno, yytext);}
+%%
+yywrap(){}
+main() { yylineno = 1; yylex(); }
+\end{lstlisting}
+
+\section*{LEX Example 3: EX-3.lex}
+\begin{lstlisting}[language=C]
+%{
+FILE *declfile;
+%}
+
+blanks [ \t]*
+letter [a-z]
+digit [0-9]
+id ({letter}|_) ({letter}|{digit}|_)*
+number {digit}+
+arraydeclpart {id}"["{number}"]"
+declpart ({arraydeclpart}|{id})
+decllist ({declpart}{blanks}","{blanks})*
+        {blanks}{declpart}{blanks}
+declaration (("int")|("float")){blanks}{decllist}{blanks};
+
+%%
+{declaration} fprintf(declfile,"%s\n", yytext);
+%%
+yywrap(){ fclose(declfile); }
+main(){
+    declfile = fopen("declfile","w");
+    yylex();
+}
+\end{lstlisting}
+
+\section*{LEX Example 4: Identifiers, Reserved Words, and Constants}
+\begin{lstlisting}[language=C]
+%{
+int hex = 0; int oct = 0; int regular = 0;
+%}
+letter    [a-zA-Z_]
+digit     [0-9]
+digits    {digit}+
+digit_oct [0-7]
+digit_hex [0-9A-F]
+int_qualifier  [uUlL]
+blanks    [ \t]+
+identifier {letter}({letter}|{digit})*
+integer   {digits}{int_qualifier}?
+hex_const 0[xX]{digit_hex}+{int_qualifier}?
+oct_const 0{digit_oct}+{int_qualifier}?
+
+%%
+if        {printf("reserved word:%s\n",yytext);}
+else      {printf("reserved word:%s\n",yytext);}
+while     {printf("reserved word:%s\n",yytext);}
+switch    {printf("reserved word:%s\n",yytext);}
+{identifier} {printf("identifier:%s\n",yytext);}
+{hex_const}  {sscanf(yytext, "%i", &hex);
+              printf("hex constant: %s = %i\n",yytext,hex);}
+{oct_const}  {sscanf(yytext, "%i", &regular);
+              printf("integer %s = %i\n",yytext, regular);}
+.|\n;
+%%
+yywrap(){}
+int main(){ yylex(); }
+\end{lstlisting}
+
+\section*{LEX Example 5: Floats in C}
+\begin{lstlisting}[language=C]
+digits   [0-9]+
+exp      ([Ee](\+|\-)?{digits})
+blanks   [ \t\n]+
+float_qual [fFlL]
+%%
+{digits}{exp}{float_qual}?/{blanks}
+   {printf("float no fraction:%s\n",yytext);}
+[0-9]*\.{digits}{exp}?{float_qual}?/{blanks}
+   {printf("float with optional int part:%s\n",yytext);}
+{digits}\.[0-9]*{exp}?{float_qual}?/{blanks}
+   {printf("float with optional fraction:%s\n",yytext);}
+.|\n ;
+%%
+yywrap(){}
+int main(){ yylex(); }
+\end{lstlisting}
+
+\section*{LEX Example 6: Desk Calculator}
+\begin{lstlisting}[language=C]
+number  [0-9]+\.?|[0-9]*\.[0-9]+
+name    [A-Za-z][A-Za-z0-9]*
+%%
+[ ] { /* skip blanks */ }
+{number} { sscanf(yytext,"%lf",&yylval.dval);
+           return NUMBER; }
+{name}   { struct symtab *sp = symlook(yytext);
+           yylval.symp = sp; return NAME; }
+"++"     { return POSTPLUS; }
+"--"     { return POSTMINUS; }
+"$"      { return 0; }
+\n|.     { return yytext[0]; }
+\end{lstlisting}
+
+\end{document}
+
