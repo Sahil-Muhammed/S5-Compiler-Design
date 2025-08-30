@@ -1,0 +1,250 @@
+Combining Transition Diagrams to form LA
+
+- Different transition diagrams must be combined appropriately to yield an LA
+	- Combining transition diagrams (TD) is not trivial
+	- It is possible to try different transition diagrams one after another
+	- For example, TDs for reserved words, constants, identifiers, and operators could be tried in that order
+	- However, this does not use the "longest match" characteristic (thenext would be an identifier, and not reserved word "then" followed by identifier "ext")
+	- To find the longest match, all TDs must be tried and the longest match must be used.
+- Using LEX to generate a lexical analyzer makes it easy for the compiler writer
+
+LEX - A Lexical Analyzer Generator
+
+- LEX has a language for describing regular expressions
+- It generates a pattern matcher for the rgular expression specifications provided to it as input
+- General structure of a LEX program
+\texttt{
+
+\{definition\} - Optional
+%%
+\{rules\} - Essential
+%%
+\{user subroutines\} - Essential
+}
+- Commands to create an LA
+	- lex ex.l - creates a C-program lex.yy.c
+	- gcc -o ex.o lex.yy.c - produces ex.o
+	- ex.o is a lexicaly analyzer, that carves tokens from its input
+
+
+\textt{
+/* LEX specification for the Example */
+%%
+[A-Z]+    \{ECHO; printf("\n");\}
+.|\n      ;
+%%
+yywrap(){}
+main() {yylex();}
+
+/* Input */
+wewevWEUFWIGhHkkH
+sdcwehSDWEhTkFLKsewT
+
+
+/* Output */
+WEUFWIG
+H
+H
+SDWE
+T
+FL
+T
+}
+
+Definitions Section
+
+- Definitions Section contains definitions and included code
+	- Definitions are like macros and have the following form:
+	name translation
+
+	digit [0-9]
+	number {digit} {digit}*
+
+	- Included code is all code included between %{and%}
+
+	\texttt{
+	%{
+		float number; int count = 0;
+	%}
+	}
+
+Rules Section
+
+- Contains patterns and C-code
+- A line starting with white space or material enclosed in %{ and %} is C-code.
+- A line starting with anything else is a pattern line
+- Pattern lines contain a pattern followed by some white space and C-code
+{pattern}    {action(C - code)}
+- C-code lines are copied verbatim to the generated C-file
+- Patterns are translated into NFA which are then converted into DFA, optimized, and stored in the form of a table and a driver routine.
+- The action associated with a pattern is executed when the DFA recognizes a string corresponding to that pattern and reaches a final state
+
+Strings and Operators
+
+- Examples of strings: integer a57d hello
+- Operators:
+\textt{ " \ [] ^ - ? . * + | () $  {} % <> }
+\ can be used as an escape character as in C
+- Character classes: enclosed in [ and ]
+- Only \, -, and ^ are special inside []. All other operators are irrelevant inside []
+- Examples:
+
+[-+][0-9]+    ---> (-|+) (0|1|2|3|4|5|6|7|8|9)+
+[a-d][0-4][A-C]  ---> a|b|c|d|0|1|2|3|4|A|B|C
+[^abc]    ---> all char except a, b, or c, including special and control char
+[+\-][0-5]+    ---> (+|-) (0|1|2|3|4|5)+
+[^a-zA-Z]    ---> all char which are not letters
+
+Operatos - Details
+
+- . operator: matches any character except newline
+- ? operator: used to implement \epsilon option ab?c stands for a(b|\epsilon)c
+- Repetition, alternation, and grouping:
+(ab|cd+)?{ef)*  ---> (ab|c(d)+|\epsilon)(ef)^*
+- Context sensitivity: /, ^, $ are context-sensitive operators
+	- ^: If the first char of an expression is ^, then that expression is matched only at the beginning of a line. Holds only outside [] operator
+	- $: If the last char of an expression is $, then that expressin is matched only at the end of a line
+	- /: Look ahead operator, indicates trailing context
+
+	^ab    ---> line beginning with ab
+	ab$    ---> line ending with ab (same as ab/\n)
+	DO/({letter}|{digit})^* = ({letter}|{digit})^*
+
+LEX Actions
+
+- Default action is to copy input to output, those characters which are unmatched
+- We need to provide patterns to catch characters
+- yytext: contains the text matched against a pattern copying yytext can be done by the action ECHO
+- yyleng: provides the number of characters matched
+- LEX always tries the rules in the order written down and the longest match is preferred
+\texttt{
+integer action1;
+[a-z]+ action2;
+}
+- The input "integers" will match the second pattern
+
+LEX Example 2: EX-2.lex
+
+\texttt{
+
+%%
+^[ ]*\n
+\n    {ECHO; yylineno++;}
+.*    {printf("%d\t%s", yylineno, yytext);}
+%%
+
+yywrap(){}
+main() { yylineno = 1; yylex(); }
+
+}
+
+LEX Example 3: EX-3.lex
+
+
+\texttt{
+
+%{
+FILE *declfile;
+%}
+
+blanks [ \t]*
+letter [a-z]
+digit [0-9]
+id ({letter}|_) ({letter}|{digit}|_)*
+number {digit}+
+arraydeclpart {id}"["{number}"]"
+declpart ({arraydeclpart}|{id})
+decllist ({declpart}{blanks}","{blanks})*
+		{blanks}{declpart}{blanks}
+declaration (("int")|("float")){blanks}
+			{decllist}{blanks};
+
+%%
+{declaration} fprintf(declfile,"%s\n", yytext);
+%%
+
+yywrap(){
+fclose(declfile);
+}
+main(){
+declfile = fopen("declfile","w");
+yylex();
+}
+}
+
+}
+
+LEX Example 4: Identifiers, Reserved Words, and Constants (id-hex-oct-int-1.lex)
+
+\texttt{
+%{
+int hex = 0; int oct = 0; int regular = 0;
+%}
+letter    [a-zA-Z_]
+digit     [0-9]
+digits    {digit}+
+digit_oct [0-7]
+digit_hex [0-9A-F]
+int_qualifier  [uUlL]
+blanks    [ \t]+
+identifier {letter}({letter}|{digit})^*
+integer   {digits}{int_qualifier}?
+hex_const 0[xX]{digit_hex}+{int_qualifier}?
+oct_const 0{digit_oct}+{int_qualifer}?
+
+%%
+if        {printf("reserved word:%s\n",yytext);}
+else      {printf("reserved word:%s\n",yytext);}
+while     {printf("reserved word:%s\n",yytext);}
+switch    {printf("reserved word:%s\n",yytext);}
+{identifier} {printf("reserved word:%s\n",yytext);}
+{hex_const}  {sscanf(yytext, "%i", &hex);
+	printf("hex constant: %s = %i\n",yytext,hex);}
+{oct_const}  {sscanf(yytext, "%i", &regular);
+	printf("integer " %s = %i\n",yytext, regular);}
+.|\n;
+%%
+yywrap(){}
+int main(){yylex();}
+
+
+LEX Example 5: Floats in C (C-floats.lex)
+
+\texttt{
+digits	[0-9]+
+exp	([Ee](\+|\-)?{digits})
+blanks	[ \t\n]+
+float_qual	[fFlL]
+%%
+{digits}{exp}{float_qual}?/{blanks}
+	{printf("float no fraction:%s\n",yytext);}
+[0-9]*\.{digits}{exp}?{float_qual}?/{blanks}
+	{printf("float with optional
+		integer part : %s\n",yytext);}
+{digits}\.[0-9]*{exp}?{float_qual}?/{blanks}
+	{printf("float with optional fraction:%s\n",yytext);}
+.|\n	;
+%%
+yywrap(){}  int main(){yylex();}
+
+}
+
+
+LEX Example 6: LA for Desk Calculator
+
+\texttt{
+
+number	[0-9]+\.?|[0-9]*\.[0-9]+
+name	[A-Za-z]A-Za-z0-9]*
+%%
+[ ] {/* skip blanks */}
+{number}  {sscanf(yytext,"%lf",&yylval.dval);
+		return NUMBER;}
+{name}  {struct symtab *sp = symlook(yytext);
+		yylval.symp = sp; return NAME;}
+"++" {return POSTPLUS;}
+"--" {return POSTMINUS;}
+"$" {return 0;}
+\n|. {return yytext[0];}
+
+}
